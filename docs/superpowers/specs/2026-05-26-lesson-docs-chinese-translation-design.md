@@ -1,151 +1,139 @@
-# Lesson Docs Chinese Translation Design
+# 课程文档中文翻译设计
 
-## Goal
+## 目标
 
-Add Chinese lesson documents to the curriculum without disrupting the existing
-English-first tooling. Each lesson that already has `docs/en.md` should gain a
-peer `docs/zh.md`, with English remaining the canonical source for current
-site, catalog, and audit behavior.
+在不破坏现有英文优先工具链的前提下，为课程补充中文教学文档。凡是已经存在
+`docs/en.md` 的 lesson，都新增同级 `docs/zh.md`；当前站点、目录构建和审计逻辑
+仍然以英文文档作为事实来源。
 
-## Scope
+## 范围
 
-This design covers:
+本设计包含：
 
-- Batch generation of `docs/zh.md` for lesson teaching documents under
-  `phases/**/docs/en.md`
-- A repeatable translation workflow that can be re-run for newly added lessons
-- Validation for translated document structure and coverage
-- A sample-first rollout that validates translation style before full-scale
-  generation
+- 为 `phases/**/docs/en.md` 下的课程教学文档批量生成 `docs/zh.md`
+- 提供可重复执行的翻译工作流，便于后续新增 lesson 继续补中文
+- 为翻译结果提供结构校验与覆盖率校验
+- 采用“先样本、后全量”的发布方式，先验证翻译风格，再批量铺开
 
-This design does not cover:
+本设计不包含：
 
-- Replacing `docs/en.md` as the canonical source for existing scripts
-- Changing the website to default to Chinese
-- Translating non-lesson files such as phase README files, repo-level docs,
-  quizzes, outputs, or code comments
+- 用 `docs/zh.md` 替代现有脚本中的 `docs/en.md` 主来源地位
+- 修改网站默认展示语言为中文
+- 翻译 lesson 之外的文件，例如 phase README、仓库级文档、quiz、outputs 或代码注释
 
-## Current State
+## 当前状态
 
-The repository currently treats `docs/en.md` as the lesson source of truth.
-Examples:
+当前仓库默认把 `docs/en.md` 视为 lesson 的事实来源。例如：
 
-- `scripts/audit_lessons.py` validates `docs/en.md`
-- `scripts/build_catalog.py` reads lesson titles from `docs/en.md`
-- Curriculum skills reference `docs/en.md` when generating quizzes or guidance
+- `scripts/audit_lessons.py` 校验的是 `docs/en.md`
+- `scripts/build_catalog.py` 读取 lesson 标题时用的是 `docs/en.md`
+- 课程相关的 skills 在生成测验或说明时也引用 `docs/en.md`
 
-There is no established `docs/zh.md` convention in the repo today. That means
-the safest first step is additive: introduce Chinese files without changing the
-English-based build and audit paths.
+仓库里目前没有现成的 `docs/zh.md` 约定。因此最稳妥的第一步是“增量添加”：
+只新增中文文件，不修改现有英文构建与审计路径。
 
-## Requirements
+## 需求
 
-### Functional Requirements
+### 功能需求
 
-1. Every lesson with `docs/en.md` can receive a sibling `docs/zh.md`.
-2. Translation output must preserve Markdown structure:
-   - headings
-   - lists
-   - blockquotes
-   - tables
-   - fenced code blocks
-   - links and image references
-3. Code blocks, commands, API names, model names, paper titles, and URLs must
-   remain untranslated unless they are part of explanatory prose outside code.
-4. The translation workflow must support partial execution:
-   - by phase
-   - by lesson path
-   - by missing-files-only mode
-5. The workflow must support validation without writing files.
-6. The workflow must be usable for an initial sample run on Phase 0 before
-   full-repo rollout.
+1. 每个已有 `docs/en.md` 的 lesson 都可以新增一个同级 `docs/zh.md`
+2. 翻译输出必须保留 Markdown 结构：
+   - 标题
+   - 列表
+   - 引用块
+   - 表格
+   - 围栏代码块
+   - 链接与图片引用
+3. 代码块、命令、API 名、模型名、论文名、URL 默认不翻译；只有代码块外的解释性文字才翻译
+4. 翻译工作流必须支持局部执行：
+   - 按 phase
+   - 按 lesson 路径
+   - 仅处理缺失 `zh.md` 的 lesson
+5. 工作流必须支持只校验、不写入文件
+6. 工作流必须能够先跑 Phase 0 样本，再决定是否全仓推进
 
-### Quality Requirements
+### 质量需求
 
-1. Chinese should be readable teaching prose, not keyword substitution.
-2. Technical terminology should prioritize correctness over literal wording.
-3. Long English sentences may be split into natural Chinese sentences where
-   helpful.
-4. H1 titles and section headings must exist in translated files.
-5. The number of fenced code blocks in `zh.md` should match `en.md`.
+1. 中文应当是可读的教学语言，而不是关键词替换
+2. 技术术语优先保证准确，再考虑字面直译
+3. 对过长英文句子，可以拆分成自然的中文表达
+4. 翻译后的文件必须保留 H1 标题和章节标题
+5. `zh.md` 中的围栏代码块数量必须与 `en.md` 一致
 
-## Recommended Approach
+## 推荐方案
 
-Use a dedicated translation script that scans lesson docs, generates peer
-`zh.md` files, and validates structure. Roll out in two stages:
+新增一个专用翻译脚本，负责扫描 lesson 文档、生成同级 `zh.md`，并提供结构校验。
+发布时分两步走：
 
-1. Generate and review a Phase 0 sample.
-2. After style approval, run the same workflow across the rest of the repo.
+1. 先生成并评审 Phase 0 的样本
+2. 样本风格确认后，再用同一套工作流跑完整个仓库
 
-This balances speed and safety. It avoids manual one-off work while still
-creating a checkpoint before hundreds of files are generated.
+这个做法兼顾速度和稳妥，避免把几百篇文档一次性推出来后才发现风格、结构或流程有问题。
 
-## Alternatives Considered
+## 备选方案
 
-### Manual per-file translation
+### 方案一：逐篇手工翻译
 
-Pros:
+优点：
 
-- Highest per-document editorial control
+- 单篇可控性最高
 
-Cons:
+缺点：
 
-- Not scalable across the curriculum
-- Hard to keep up with newly added lessons
-- No reusable workflow for future maintenance
+- 对整个课程规模不现实
+- 后续新增 lesson 时难以持续维护
+- 没有可复用工作流
 
-### Full-repo translation with no workflow or validation
+### 方案二：不做工作流和校验，直接全量翻译
 
-Pros:
+优点：
 
-- Fastest initial output
+- 初次产出最快
 
-Cons:
+缺点：
 
-- High risk of malformed Markdown
-- Hard to re-run safely
-- Hard to audit missing or stale translations later
+- Markdown 结构损坏风险高
+- 不便于重复执行
+- 后续难以排查缺失或陈旧翻译
 
-## Proposed File Changes
+## 拟修改文件
 
-### New Files
+### 新增文件
 
 - `scripts/translate_lessons.py`
-  - Batch translation entry point for lesson docs
+  - 课程文档批量翻译入口
 - `docs/superpowers/specs/2026-05-26-lesson-docs-chinese-translation-design.md`
-  - This design document
+  - 本设计文档
 
-### Potential Updates to Existing Files
+### 可能在后续阶段修改的现有文件
 
 - `scripts/audit_lessons.py`
-  - Optional later enhancement to validate `docs/zh.md`
+  - 后续可扩展为支持校验 `docs/zh.md`
 - `scripts/build_catalog.py`
-  - Optional later enhancement to expose `has_zh_docs`
+  - 后续可扩展为输出 `has_zh_docs`
 - `README.md`
-  - Optional later note describing bilingual lesson availability
+  - 后续可补充“双语 lesson 可用”的说明
 
-Only `scripts/translate_lessons.py` is required for the first implementation
-phase. Existing build and audit scripts should remain English-canonical until
-the translation layer is stable.
+第一阶段真正必需的只有 `scripts/translate_lessons.py`。在中文翻译层稳定前，现有构建和审计脚本继续保持英文优先。
 
-## Translation Workflow Design
+## 翻译工作流设计
 
-### Inputs
+### 输入
 
-- Source files: `phases/**/docs/en.md`
-- Scope filters:
-  - all lessons
-  - specific phase
-  - specific lesson directory
-  - missing translations only
+- 源文件：`phases/**/docs/en.md`
+- 作用范围过滤：
+  - 全部 lesson
+  - 指定 phase
+  - 指定 lesson 目录
+  - 仅处理缺失翻译的 lesson
 
-### Outputs
+### 输出
 
-- Target files: `phases/**/docs/zh.md`
+- 目标文件：`phases/**/docs/zh.md`
 
-### CLI Shape
+### 命令行形式
 
-The implementation must support this command shape:
+实现必须支持如下命令形式：
 
 ```bash
 python scripts/translate_lessons.py --phase 00
@@ -154,124 +142,120 @@ python scripts/translate_lessons.py --lesson phases/00-setup-and-tooling/01-dev-
 python scripts/translate_lessons.py --check
 ```
 
-### Translation Rules
+### 翻译规则
 
-The script should preserve:
+脚本必须保留：
 
-- fenced code blocks verbatim
-- inline code spans verbatim where possible
-- raw URLs verbatim
-- Markdown table layout
-- image and link targets
+- 围栏代码块原样不动
+- 行内代码尽量保持原样
+- 原始 URL 不变
+- Markdown 表格布局不变
+- 图片和链接目标不变
 
-The script should translate:
+脚本应当翻译：
 
-- titles
-- explanatory prose
-- list items
-- table labels and descriptions
-- blockquote prose
-- exercise text
+- 标题
+- 正文解释
+- 列表项
+- 表格中的标签和说明文字
+- 引用块中的正文
+- 练习说明
 
-The script should not attempt to rewrite:
+脚本不应主动改写：
 
-- code
-- shell commands
-- package names
-- framework names
-- API identifiers
+- 代码
+- shell 命令
+- 包名
+- 框架名
+- API 标识符
 
-## Validation Design
+## 校验设计
 
-The translation workflow should provide a validation mode that reports:
+翻译工作流需要提供一个校验模式，能够报告：
 
-- missing `docs/zh.md`
-- missing H1 in `docs/zh.md`
-- code block count mismatch between `en.md` and `zh.md`
-- obvious unreadable output such as empty files
+- 缺少 `docs/zh.md`
+- `docs/zh.md` 缺少 H1
+- `en.md` 与 `zh.md` 围栏代码块数量不一致
+- 明显不可用的输出，例如空文件
 
-Validation should be read-only and return a non-zero exit code when problems
-are found.
+校验模式必须是只读的，并且在发现问题时返回非零退出码。
 
-## Rollout Plan
+## 推进节奏
 
-### Stage 1: Sample
+### 阶段一：样本
 
-- Implement the translation script and validation mode.
-- Generate `docs/zh.md` only for Phase 0.
-- Review the Chinese output for tone, terminology, and structure.
-- Adjust translation rules if the sample reveals weak spots.
+- 实现翻译脚本与校验模式
+- 只为 Phase 0 生成 `docs/zh.md`
+- 评审中文输出的语气、术语与结构
+- 如果样本暴露问题，再调整翻译规则
 
-### Stage 2: Full Translation
+### 阶段二：全量翻译
 
-- Run translation for all remaining lesson docs.
-- Run validation across the full curriculum.
-- Spot-check multiple phases for consistency.
+- 为剩余 lesson 执行全量翻译
+- 在全课程范围内执行校验
+- 抽查多个 phase，确认风格与结构一致
 
-### Stage 3: Optional Follow-Up
+### 阶段三：可选后续
 
-- Extend catalog metadata to note Chinese availability.
-- Extend audit tooling to treat `zh.md` as a supported translation layer.
-- Add website language switching if desired later.
+- 扩展 catalog 元数据，标记中文文档可用性
+- 扩展 audit 工具，把 `zh.md` 作为受支持的翻译层
+- 如果需要，再为网站增加中英文切换
 
-## Risks and Mitigations
+## 风险与缓解
 
-### Risk: Low-quality or awkward translation
+### 风险：翻译质量差或读起来生硬
 
-Mitigation:
+缓解：
 
-- Sample-first rollout on Phase 0
-- Preserve structure so manual cleanup remains easy
-- Keep English canonical during the first pass
+- 先做 Phase 0 样本
+- 保持结构稳定，方便后续人工修订
+- 第一阶段继续以英文为主来源
 
-### Risk: Breaking existing repo tooling
+### 风险：破坏现有仓库工具链
 
-Mitigation:
+缓解：
 
-- Do not change existing consumers of `docs/en.md` in phase one
-- Add Chinese files additively
+- 第一阶段不改动现有 `docs/en.md` 消费方
+- 仅增量添加中文文件
 
-### Risk: Future lessons fall out of sync
+### 风险：未来新增 lesson 时中英文不同步
 
-Mitigation:
+缓解：
 
-- Make translation re-runnable
-- Add `--missing-only` and `--check` modes
+- 让翻译流程可重复执行
+- 提供 `--missing-only` 与 `--check` 模式
 
-## Testing Strategy
+## 测试策略
 
-Implementation should be verified with:
+实现完成后应至少验证：
 
-1. A targeted run against a single lesson
-2. A Phase 0 batch run
-3. Validation over the generated Phase 0 translations
-4. A full-curriculum missing-file check before and after full rollout
+1. 单个 lesson 的定向运行
+2. Phase 0 的批量运行
+3. 对生成出的 Phase 0 中文文档执行校验
+4. 全课程范围内在全量翻译前后各做一次缺失检查
 
-Automated verification should focus on:
+自动化验证应重点覆盖：
 
-- lesson discovery
-- scope filtering
-- Markdown block preservation
-- validation error detection
+- lesson 发现逻辑
+- 作用范围过滤
+- Markdown 结构保留
+- 校验问题发现逻辑
 
-## Success Criteria
+## 成功标准
 
-This project is successful when:
+满足以下条件即可视为成功：
 
-- each lesson can have a valid `docs/zh.md`
-- the translation workflow can be re-run safely
-- Phase 0 is translated and reviewed successfully
-- full-curriculum translation can be executed without changing English-based
-  tooling
+- 每个 lesson 都可以拥有合法的 `docs/zh.md`
+- 翻译工作流可以安全重复执行
+- Phase 0 样本翻译完成且通过评审
+- 在不改动英文主工具链的前提下，可以继续推进全量中文化
 
-## Implementation Boundary
+## 实现边界
 
-The first implementation cycle should stop after:
+第一轮实现应停在以下位置：
 
-- adding the translation script
-- generating sample Chinese docs for Phase 0
-- validating the sample
+- 增加翻译脚本
+- 为 Phase 0 生成中文样本
+- 对样本执行校验
 
-Full-curriculum generation can proceed immediately after sample approval using
-the same workflow, but it should remain a distinct execution step so the user
-can inspect the sample quality first.
+在样本确认通过后，可以立刻用同一套工作流继续推进全量翻译；但这应当是一个独立执行步骤，方便先检查样本质量。
